@@ -40,6 +40,20 @@ export class UsosController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUsoDto: UpdateUsoDto) {
+    const nombre = updateUsoDto.nombre;
+    if (nombre !== undefined) {
+      if (nombre.trim() === '') {
+        throw new ConflictException('El nombre no puede estar vacío.');
+      }
+      const existingUso = this.usosService
+        .findAll()
+        .find((uso) => uso.nombre === nombre && uso.id !== +id);
+      if (existingUso) {
+        throw new ConflictException(
+          `El uso con nombre "${nombre}" ya existe.`,
+        );
+      }
+    }
     return this.usosService.update(+id, updateUsoDto);
   }
 
