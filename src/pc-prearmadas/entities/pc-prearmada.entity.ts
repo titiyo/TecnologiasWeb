@@ -27,7 +27,14 @@ export class PcPrearmada {
   @Column({ nullable: true })
   placaVideo?: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value === null ? null : parseFloat(value)),
+    },
+  })
   precio!: number;
 
   @Column()

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUsoDto } from './dto/create-uso.dto';
@@ -47,10 +52,19 @@ export class UsosService implements OnModuleInit {
   }
 
   async remove(id: number) {
-    const result = await this.usosRepository.delete(id);
-    if (result.affected === 0) {
+    const uso = await this.usosRepository.findOne({
+      where: { id },
+      relations: { pcPrearmadas: true },
+    });
+    if (!uso) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
+    if (uso.pcPrearmadas.length > 0) {
+      throw new ConflictException(
+        `No se puede eliminar el uso con ID ${id} porque tiene PCs prearmadas asociadas.`,
+      );
+    }
+    await this.usosRepository.delete(id);
     return {
       message: `El uso con ID ${id} ha sido eliminado.`,
       status: 'success',
