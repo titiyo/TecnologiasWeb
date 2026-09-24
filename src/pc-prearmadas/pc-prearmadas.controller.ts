@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { PcPrearmadasService } from './pc-prearmadas.service';
 import { CreatePcPrearmadaDto } from './dto/create-pc-prearmada.dto';
@@ -21,8 +22,8 @@ export class PcPrearmadasController {
   }
 
   @Get()
-  findAll() {
-    return this.pcPrearmadasService.findAll();
+  findAll(@Query('usoId') usoId?: string) {
+    return this.pcPrearmadasService.findAll(usoId ? +usoId : undefined);
   }
 
   @Get(':id')

@@ -247,8 +247,36 @@ erDiagram
   - **Nota pendiente:** borrar un `Uso` que tiene PCs asociadas genera un error de FK; hoy no está
     manejado con un código lindo (a decidir más adelante).
 
-**Checkpoint pendiente:** explicar qué lado de la relación lleva la FK y por qué, y qué diferencia
-hay entre guardar `uso: { id: usoId }` y guardar el objeto `uso` completo.
+**Checkpoint respondido por el/la estudiante:**
+
+> "Lado de la FK: va en el lado N (`PcPrearmada`), porque cada PC tiene un único uso asociado. Si
+> se pusiera en `Uso` (el 1), esa tabla tendría que almacenar una lista de IDs, violando las reglas
+> de bases de datos relacionales. `uso: { id: usoId }` vs. objeto completo: pasando `{ id: usoId }`
+> sólo le indicás a TypeORM el ID para armar la clave foránea en la consulta SQL. Enviar el objeto
+> completo te obligaría a hacer una consulta previa (SELECT) para traerlo o correrías el riesgo de
+> sobrescribir datos de la tabla `Uso` si estuviera configurado el guardado en cascada."
+
+### Paso 9 — Filtro del listado por uso: `GET /pc-prearmadas?usoId=X` (hecho)
+
+- **Objetivo:** cumplir el requisito de la consigna de **filtrar el listado por un campo**.
+- **Concepto (cátedra):** el filtrado usa **Query Parameters** (`?dato=valor`); a diferencia de un
+  Route Parameter (`/recurso/:id`), los query params **modifican el conjunto resultado** y no el
+  recurso pedido. Se leen en Nest con `@Query()`.
+- **Implementación:**
+  - `PcPrearmadasController.findAll(@Query('usoId') usoId?: string)`: pasa `usoId ? +usoId : undefined`.
+  - `PcPrearmadasService.findAll(usoId?)`: si viene `usoId`, filtra con `where: { uso: { id: usoId } }`
+    (filtra por la FK de la relación); si no, devuelve todas. Siempre con `relations: { uso: true }`.
+- **Ejemplo:** `GET /pc-prearmadas?usoId=1` devuelve solo las PCs del uso con id 1 (ej. "Gaming").
+
+**Checkpoint respondido por el/la estudiante:**
+
+> "Route param (`/usos/:id`): identifica un recurso único y concreto dentro de la jerarquía de la
+> URL. Es parte obligatoria de la ruta: sin el ID, estás apuntando a otro endpoint distinto. Query
+> param (`?usoId=1`): modifica o restringe el resultado de una colección sin cambiar el recurso al
+> que le pegás; es opcional. Por qué query param para filtrar: la convención REST y la cátedra
+> indican que un filtro altera el conjunto de datos devuelto (seguís pidiendo la colección
+> `pc-prearmadas`), pero no define un recurso individual nuevo ni debe ensuciar la estructura de la
+> ruta. Si no mandás el query param, simplemente recibís todas las PCs."
 
 ---
 

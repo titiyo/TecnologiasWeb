@@ -24,9 +24,10 @@ export class PcPrearmadasService {
     return this.pcPrearmadasRepository.save(nuevaPc);
   }
 
-  findAll() {
+  findAll(usoId?: number) {
     return this.pcPrearmadasRepository.find({
       relations: { uso: true },
+      where: usoId ? { uso: { id: usoId } } : undefined,
     });
   }
 
