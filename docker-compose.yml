@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pc-prearmadas-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret123!
+      POSTGRES_DB: pc_prearmadas
+    ports:
+      - '5432:5432'
+
+  adminer:
+    image: adminer
+    container_name: pc-prearmadas-adminer
+    restart: always
+    ports:
+      - '8080:8080'
