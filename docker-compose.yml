@@ -9,6 +9,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret123!
       POSTGRES_DB: pc_prearmadas
+    volumes:
+      - ./data:/var/lib/postgresql/data
     ports:
       - '5432:5432'
 

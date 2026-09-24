@@ -202,8 +202,53 @@ erDiagram
   - `src/app.module.ts`: `TypeOrmModule.forRoot(...)`.
   - Specs de `Usos` actualizados con mocks del repositorio/servicio para que sigan pasando.
 
-**Checkpoint pendiente:** explicar por qué los métodos del service pasan a ser `async`/`await` al
-usar un repositorio, y qué hace `TypeOrmModule.forFeature([Uso])` en el módulo.
+**Checkpoint respondido por el/la estudiante:**
+
+> "`async`/`await`: la base de datos es externa (corre en Docker/Postgres); las consultas toman
+> tiempo y devuelven una `Promise`, por lo que se usa `async`/`await` para no congelar la
+> aplicación mientras espera la respuesta. `TypeOrmModule.forFeature([Uso])`: registra la entidad
+> `Uso` en ese módulo para crear y dejar listo su `Repository<Uso>` mediante inyección de
+> dependencias."
+
+### Paso 7 — Persistencia de datos del contenedor (hecho)
+
+- **Objetivo:** que los datos de Postgres sobrevivan a reinicios del contenedor y no se versionen.
+- **Cambios:** en `docker-compose.yml` se agregó el volumen `./data:/var/lib/postgresql/data`. El
+  `.gitignore` ya incluía `data/`, así que la carpeta de datos no se sube al repo.
+- **Concepto:** un *bind mount* conecta una carpeta del host con una del contenedor; al mapear el
+  directorio de datos de Postgres, la información persiste entre `down`/`up`.
+
+### Paso 8 — `PcPrearmada` service/controller con Postgres (relación 1:N) (hecho)
+
+- **Objetivo:** implementar el CRUD de la segunda entidad, ya en Postgres, con su relación con `Uso`.
+- **Conceptos aplicados (cátedra):**
+  - **Relación 1:N:** en `PcPrearmada`, `@ManyToOne(() => Uso, (uso) => uso.pcPrearmadas)` +
+    `@JoinColumn({ name: 'uso_id' })`; en `Uso`, `@OneToMany(() => PcPrearmada, (pc) => pc.uso)`.
+    El `@JoinColumn` deja la FK en la tabla de PCs con la columna `uso_id`.
+  - **`relations`:** al leer (`find`/`findOne`) se carga la relación con `relations: { uso: true }`,
+    así la respuesta incluye el objeto `uso` y no solo la FK.
+  - **Comunicación entre módulos:** `UsosModule` **exporta** `UsosService`, y `PcPrearmadasModule`
+    lo **importa**, para inyectarlo (Inyección de Dependencias) y validar que el uso exista.
+  - **Validación de la relación:** al crear/actualizar, se llama a `usosService.findOne(usoId)`;
+    si no existe, ese método ya lanza `NotFoundException` (404).
+  - **`autoLoadEntities`:** al registrar `PcPrearmada` con `forFeature`, TypeORM la carga sola.
+- **Cambios en el código:**
+  - `src/pc-prearmadas/entities/pc-prearmada.entity.ts`: entidad con decoradores y relación.
+  - `src/usos/entities/uso.entity.ts`: se agregó el lado `@OneToMany`.
+  - `src/pc-prearmadas/pc-prearmadas.module.ts`, `.service.ts`, `.controller.ts`.
+  - `src/usos/usos.module.ts`: `exports: [UsosService]`.
+  - `src/app.module.ts`: importa `PcPrearmadasModule`.
+- **Decisiones/notas:**
+  - En `update` se usa "cargar (`findOne`) + modificar + `save`" en vez de `repository.update` con
+    `result.affected`, porque con la relación el `save` es más seguro para reasignar la FK.
+  - `remove` sí usa el chequeo de `result.affected` (404 si 0).
+  - **Nota pendiente:** `precio` es `decimal`; Postgres lo devuelve como **string** (ej. `"1500.00"`).
+    A revisar si conviene transformarlo a número para el frontend.
+  - **Nota pendiente:** borrar un `Uso` que tiene PCs asociadas genera un error de FK; hoy no está
+    manejado con un código lindo (a decidir más adelante).
+
+**Checkpoint pendiente:** explicar qué lado de la relación lleva la FK y por qué, y qué diferencia
+hay entre guardar `uso: { id: usoId }` y guardar el objeto `uso` completo.
 
 ---
 
@@ -218,3 +263,6 @@ usar un repositorio, y qué hace `TypeOrmModule.forFeature([Uso])` en el módulo
 | (a completar) | Add PcPrearmada entity and DTOs |
 | (a completar) | Add docker-compose for Postgres and Adminer |
 | (a completar) | Integrate TypeORM/Postgres for Uso |
+| (a completar) | Persist Postgres data volume |
+| (a completar) | Implement PcPrearmada CRUD with Postgres relation |
+| (a completar) | Filter PcPrearmada listing by usoId |
