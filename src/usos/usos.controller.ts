@@ -17,8 +17,8 @@ export class UsosController {
   constructor(private readonly usosService: UsosService) {}
 
   @Post()
-  create(@Body() createUsoDto: CreateUsoDto) {
-    const usos = this.usosService.findAll();
+  async create(@Body() createUsoDto: CreateUsoDto) {
+    const usos = await this.usosService.findAll();
     const existingUso = usos.find((uso) => uso.nombre === createUsoDto.nombre);
     if (existingUso) {
       throw new ConflictException(
@@ -39,19 +39,18 @@ export class UsosController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUsoDto: UpdateUsoDto) {
+  async update(@Param('id') id: string, @Body() updateUsoDto: UpdateUsoDto) {
     const nombre = updateUsoDto.nombre;
     if (nombre !== undefined) {
       if (nombre.trim() === '') {
         throw new ConflictException('El nombre no puede estar vacío.');
       }
-      const existingUso = this.usosService
-        .findAll()
-        .find((uso) => uso.nombre === nombre && uso.id !== +id);
+      const usos = await this.usosService.findAll();
+      const existingUso = usos.find(
+        (uso) => uso.nombre === nombre && uso.id !== +id,
+      );
       if (existingUso) {
-        throw new ConflictException(
-          `El uso con nombre "${nombre}" ya existe.`,
-        );
+        throw new ConflictException(`El uso con nombre "${nombre}" ya existe.`);
       }
     }
     return this.usosService.update(+id, updateUsoDto);

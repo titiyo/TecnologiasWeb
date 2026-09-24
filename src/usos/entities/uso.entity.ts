@@ -1,9 +1,10 @@
-export class Uso {
-  id: number;
-  nombre: string;
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-  constructor(id: number, nombre: string) {
-    this.id = id;
-    this.nombre = nombre;
-  }
+@Entity()
+export class Uso {
+  @PrimaryGeneratedColumn()
+  id!: number;
+
+  @Column()
+  nombre!: string;
 }

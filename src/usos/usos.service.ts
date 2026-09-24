@@ -1,49 +1,59 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUsoDto } from './dto/create-uso.dto';
 import { UpdateUsoDto } from './dto/update-uso.dto';
 import { Uso } from './entities/uso.entity';
 
 @Injectable()
-export class UsosService {
-  private usos: Uso[] = [
-    new Uso(1, 'Gaming'),
-    new Uso(2, 'Oficina'),
-    new Uso(3, 'Doméstico'),
-    new Uso(4, 'Estudio'),
-  ]; // In-memory storage for usos
+export class UsosService implements OnModuleInit {
+  constructor(
+    @InjectRepository(Uso)
+    private readonly usosRepository: Repository<Uso>,
+  ) {}
+
+  async onModuleInit() {
+    const count = await this.usosRepository.count();
+    if (count === 0) {
+      await this.usosRepository.save([
+        { nombre: 'Gaming' },
+        { nombre: 'Oficina' },
+        { nombre: 'Doméstico' },
+        { nombre: 'Estudio' },
+      ]);
+    }
+  }
 
   create(createUsoDto: CreateUsoDto) {
-    const newUso = new Uso(this.usos.length + 1, createUsoDto.nombre);
-    this.usos.push(newUso);
-    return newUso;
+    return this.usosRepository.save(createUsoDto);
   }
 
   findAll() {
-    return this.usos;
+    return this.usosRepository.find();
   }
 
-  findOne(id: number) {
-    const uso = this.usos.find((uso) => uso.id === id);
+  async findOne(id: number) {
+    const uso = await this.usosRepository.findOneBy({ id });
     if (!uso) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
     return uso;
   }
 
-  update(id: number, updateUsoDto: UpdateUsoDto) {
-    const uso = this.findOne(id);
-    if (updateUsoDto.nombre !== undefined) {
-      uso.nombre = updateUsoDto.nombre;
-    }
-    return uso;
+  async update(id: number, updateUsoDto: UpdateUsoDto) {
+    const uso = await this.findOne(id);
+    Object.assign(uso, updateUsoDto);
+    return this.usosRepository.save(uso);
   }
 
-  remove(id: number) {
-    const index = this.usos.findIndex((uso) => uso.id === id);
-    if (index === -1) {
+  async remove(id: number) {
+    const result = await this.usosRepository.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
-    this.usos.splice(index, 1);
-    return `El uso con ID ${id} ha sido eliminado.`;
+    return {
+      message: `El uso con ID ${id} ha sido eliminado.`,
+      status: 'success',
+    };
   }
 }
