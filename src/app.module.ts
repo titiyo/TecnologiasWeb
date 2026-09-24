@@ -9,11 +9,11 @@ import { PcPrearmadasModule } from './pc-prearmadas/pc-prearmadas.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'secret123!',
-      database: 'pc_prearmadas',
+      host: process.env.DB_HOST ?? 'localhost',
+      port: parseInt(process.env.DB_PORT ?? '5432', 10),
+      username: process.env.DB_USERNAME ?? 'postgres',
+      password: process.env.DB_PASSWORD ?? 'secret123!',
+      database: process.env.DB_NAME ?? 'pc_prearmadas',
       autoLoadEntities: true,
       synchronize: true,
     }),
