@@ -1,98 +1,121 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PC Prearmadas — API (Backend)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend del TP de **Tecnologías Web** (TUARI/UNICEN). API REST en **NestJS** con persistencia en
+**PostgreSQL** vía **TypeORM**, que administra PCs prearmadas agrupadas por tipo de uso.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Relación 1 a N:** `Uso` (1) → `PcPrearmada` (N).
+- CRUD completo de ambas entidades + **filtrado** del listado de PCs por uso.
+- Colección de Postman con todos los casos de uso incluida en `postman/`.
 
-## Description
+## Tecnologías
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- NestJS + TypeScript
+- TypeORM + PostgreSQL (`pg`)
+- Docker / docker-compose (PostgreSQL + Adminer)
 
-## Project setup
+## Modelo de datos
 
-```bash
-$ npm install
+**Uso**
+
+| Campo  | Tipo   |
+| ------ | ------ |
+| id     | int PK |
+| nombre | string |
+
+**PcPrearmada**
+
+| Campo          | Tipo            |
+| -------------- | --------------- |
+| id             | int PK          |
+| nombre         | string          |
+| procesador     | string          |
+| ram            | int (GB)        |
+| almacenamiento | string          |
+| placa_video    | string (opcional) |
+| precio         | decimal         |
+| fuente         | string          |
+| gabinete       | string          |
+| uso_id         | int FK → Uso.id |
+
+```mermaid
+erDiagram
+    USO ||--o{ PC_PREARMADA : "agrupa"
+    USO { int id PK string nombre }
+    PC_PREARMADA { int id PK string nombre string procesador int ram string almacenamiento string placa_video decimal precio string fuente string gabinete int uso_id FK }
 ```
 
-## Compile and run the project
+## Requisitos
+
+- Node.js y npm
+- Docker (para la base de datos)
+
+## Puesta en marcha
 
 ```bash
-# development
-$ npm run start
+# 1. instalar dependencias
+npm install
 
-# watch mode
-$ npm run start:dev
+# 2. levantar PostgreSQL + Adminer
+docker compose up -d
 
-# production mode
-$ npm run start:prod
+# 3. levantar la API en modo desarrollo
+npm run start:dev
 ```
 
-## Run tests
+La API queda en `http://localhost:3000`. Adminer (administrador de la DB) en `http://localhost:8080`.
+
+Al iniciar, si la tabla de usos está vacía, se **siembran** 4 usos: Gaming, Oficina, Doméstico y Estudio.
+
+## Variables de entorno
+
+La conexión a la base se lee de variables de entorno, con valores por defecto para desarrollo local
+(ver `.env.example`). Sin `@nestjs/config`, un archivo `.env` **no se carga automáticamente**; en
+producción (Render) se configuran desde el panel del servicio.
+
+| Variable    | Default        |
+| ----------- | -------------- |
+| DB_HOST     | localhost      |
+| DB_PORT     | 5432           |
+| DB_USERNAME | postgres       |
+| DB_PASSWORD | secret123!     |
+| DB_NAME     | pc_prearmadas  |
+| PORT        | 3000           |
+
+## Endpoints
+
+### Usos
+
+| Método | Ruta        | Descripción                          |
+| ------ | ----------- | ------------------------------------ |
+| GET    | `/usos`     | Listar usos                          |
+| GET    | `/usos/:id` | Obtener un uso por id                |
+| POST   | `/usos`     | Crear un uso (409 si ya existe)      |
+| PATCH  | `/usos/:id` | Actualizar un uso (409 nombre vacío) |
+| DELETE | `/usos/:id` | Eliminar un uso (409 si tiene PCs)   |
+
+### PcPrearmadas
+
+| Método | Ruta                      | Descripción                                    |
+| ------ | ------------------------- | ---------------------------------------------- |
+| GET    | `/pc-prearmadas`          | Listar PCs (con su uso embebido)               |
+| GET    | `/pc-prearmadas?usoId=1`  | **Filtrar** las PCs por uso                    |
+| GET    | `/pc-prearmadas/:id`      | Obtener una PC por id                          |
+| POST   | `/pc-prearmadas`          | Crear una PC (404 si el uso no existe)         |
+| PATCH  | `/pc-prearmadas/:id`      | Actualizar una PC (404 si el uso no existe)    |
+| DELETE | `/pc-prearmadas/:id`      | Eliminar una PC                                |
+
+## Colección de Postman
+
+En [`postman/PC-Prearmadas.postman_collection.json`](postman/PC-Prearmadas.postman_collection.json),
+con todos los casos de uso (incluidos los de error 404 / 409). Importarla en Postman y usar la
+variable `baseUrl` (por defecto `http://localhost:3000`).
+
+## Tests
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run test
 ```
 
-## Deployment
+## Autor
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+_(completar)_ — Tecnologías Web, TUARI/UNICEN.
