@@ -1,0 +1,313 @@
+{
+  "info": {
+    "name": "PC Prearmadas - TP Tecnologias Web",
+    "description": "Colección de Postman para la primera entrega del TP (backend NestJS + PostgreSQL). Incluye todos los casos de uso: CRUD de Usos y de PcPrearmadas, filtrado del listado por uso, y casos de error (404 y 409).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Usos",
+      "item": [
+        {
+          "name": "Listar usos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "Devuelve el listado completo de usos. 200 OK."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener uso por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "1"]
+            },
+            "description": "Devuelve un uso por su id. 200 OK, o 404 si no existe."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear uso",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Streaming\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "Crea un uso nuevo. 201 Created."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear uso duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gaming\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "Intenta crear un uso con un nombre ya existente. 409 Conflict."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar uso",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Streaming y edición\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos/5",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "5"]
+            },
+            "description": "Actualiza (parcialmente) un uso. 200 OK, o 404 si no existe."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar uso con nombre vacío (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"   \"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos/5",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "5"]
+            },
+            "description": "Intenta dejar el nombre vacío / solo espacios. 409 Conflict."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar uso",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos/5",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "5"]
+            },
+            "description": "Elimina un uso sin PCs asociadas. 200 OK (message + status)."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar uso con PCs asociadas (409)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "1"]
+            },
+            "description": "El uso 1 (Gaming) tiene PCs asociadas: 409 Conflict."
+          },
+          "response": []
+        },
+        {
+          "name": "Uso inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "999"]
+            },
+            "description": "Uso que no existe. 404 Not Found."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "PcPrearmadas",
+      "item": [
+        {
+          "name": "Listar PCs prearmadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas"]
+            },
+            "description": "Lista todas las PCs con su uso embebido (relations). 200 OK."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar PCs por uso (?usoId=1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas?usoId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas"],
+              "query": [{ "key": "usoId", "value": "1" }]
+            },
+            "description": "Filtra el listado por uso usando un query param. 200 OK."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener PC por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas", "1"]
+            },
+            "description": "Devuelve una PC por id con su uso. 200 OK, o 404."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear PC prearmada",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"PC Gamer Pro\",\n  \"procesador\": \"Ryzen 7\",\n  \"ram\": 32,\n  \"almacenamiento\": \"1TB SSD\",\n  \"placaVideo\": \"RTX 4070\",\n  \"precio\": 1500.5,\n  \"fuente\": \"750W\",\n  \"gabinete\": \"ATX\",\n  \"usoId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas"]
+            },
+            "description": "Crea una PC asociada a un uso. 201 Created. placaVideo es opcional."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear PC con uso inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"PC Fantasma\",\n  \"procesador\": \"i5\",\n  \"ram\": 8,\n  \"almacenamiento\": \"256GB SSD\",\n  \"precio\": 500,\n  \"fuente\": \"450W\",\n  \"gabinete\": \"Micro ATX\",\n  \"usoId\": 999\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas"]
+            },
+            "description": "El uso indicado no existe: 404 Not Found (validación de la relación)."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar PC prearmada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ram\": 64,\n  \"precio\": 1800.99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas", "1"]
+            },
+            "description": "Actualiza parcialmente una PC. 200 OK, o 404 si no existe el uso/PC."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar PC prearmada",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas", "1"]
+            },
+            "description": "Elimina una PC. 200 OK (message + status)."
+          },
+          "response": []
+        },
+        {
+          "name": "PC inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pc-prearmadas/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["pc-prearmadas", "999"]
+            },
+            "description": "PC que no existe. 404 Not Found."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
