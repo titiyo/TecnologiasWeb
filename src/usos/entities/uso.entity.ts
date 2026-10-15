@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { PcPrearmada } from '../../pc-prearmadas/entities/pc-prearmada.entity';
+import { Componente } from '../../componentes/entities/componente.entity';
 
 @Entity()
 export class Uso {
@@ -9,6 +9,6 @@ export class Uso {
   @Column()
   nombre!: string;
 
-  @OneToMany(() => PcPrearmada, (pcPrearmada) => pcPrearmada.uso)
-  pcPrearmadas!: PcPrearmada[];
+  @OneToMany(() => Componente, (componente) => componente.uso)
+  componentes!: Componente[];
 }

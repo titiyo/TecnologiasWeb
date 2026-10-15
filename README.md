@@ -1,10 +1,10 @@
-# PC Prearmadas — API (Backend)
+# Componentes — API (Backend)
 
 Backend del TP de **Tecnologías Web** (TUARI/UNICEN). API REST en **NestJS** con persistencia en
-**PostgreSQL** vía **TypeORM**, que administra PCs prearmadas agrupadas por tipo de uso.
+**PostgreSQL** vía **TypeORM**, que administra componentes de PC agrupados por tipo de uso.
 
-- **Relación 1 a N:** `Uso` (1) → `PcPrearmada` (N).
-- CRUD completo de ambas entidades + **filtrado** del listado de PCs por uso.
+- **Relación 1 a N:** `Uso` (1) → `Componente` (N).
+- CRUD completo de ambas entidades + **filtrado** por uso y **búsqueda** por nombre.
 - Colección de Postman con todos los casos de uso incluida en `postman/`.
 
 ## Tecnologías
@@ -22,26 +22,22 @@ Backend del TP de **Tecnologías Web** (TUARI/UNICEN). API REST en **NestJS** co
 | id     | int PK |
 | nombre | string |
 
-**PcPrearmada**
+**Componente**
 
-| Campo          | Tipo            |
-| -------------- | --------------- |
-| id             | int PK          |
-| nombre         | string          |
-| procesador     | string          |
-| ram            | int (GB)        |
-| almacenamiento | string          |
-| placa_video    | string (opcional) |
-| precio         | decimal         |
-| fuente         | string          |
-| gabinete       | string          |
-| uso_id         | int FK → Uso.id |
+| Campo   | Tipo              |
+| ------- | ----------------- |
+| id      | int PK            |
+| nombre  | string            |
+| tipo    | string            |
+| marca   | string            |
+| precio  | decimal           |
+| uso_id  | int FK → Uso.id   |
 
 ```mermaid
 erDiagram
-    USO ||--o{ PC_PREARMADA : "agrupa"
+    USO ||--o{ COMPONENTE : "agrupa"
     USO { int id PK string nombre }
-    PC_PREARMADA { int id PK string nombre string procesador int ram string almacenamiento string placa_video decimal precio string fuente string gabinete int uso_id FK }
+    COMPONENTE { int id PK string nombre string tipo string marca decimal precio int uso_id FK }
 ```
 
 ## Requisitos
@@ -91,22 +87,25 @@ producción (Render) se configuran desde el panel del servicio.
 | GET    | `/usos/:id` | Obtener un uso por id                |
 | POST   | `/usos`     | Crear un uso (409 si ya existe)      |
 | PATCH  | `/usos/:id` | Actualizar un uso (409 nombre vacío) |
-| DELETE | `/usos/:id` | Eliminar un uso (409 si tiene PCs)   |
+| DELETE | `/usos/:id` | Eliminar un uso (409 si tiene componentes) |
 
-### PcPrearmadas
+### Componentes
 
-| Método | Ruta                      | Descripción                                    |
-| ------ | ------------------------- | ---------------------------------------------- |
-| GET    | `/pc-prearmadas`          | Listar PCs (con su uso embebido)               |
-| GET    | `/pc-prearmadas?usoId=1`  | **Filtrar** las PCs por uso                    |
-| GET    | `/pc-prearmadas/:id`      | Obtener una PC por id                          |
-| POST   | `/pc-prearmadas`          | Crear una PC (404 si el uso no existe)         |
-| PATCH  | `/pc-prearmadas/:id`      | Actualizar una PC (404 si el uso no existe)    |
-| DELETE | `/pc-prearmadas/:id`      | Eliminar una PC                                |
+| Método | Ruta                          | Descripción                                    |
+| ------ | ----------------------------- | ---------------------------------------------- |
+| GET    | `/componentes`                | Listar componentes (con su uso embebido)       |
+| GET    | `/componentes?usoId=1`        | **Filtrar** por uso                            |
+| GET    | `/componentes?nombre=ryzen`   | **Buscar** por nombre (parcial, sin distinguir mayúsculas) |
+| GET    | `/componentes/:id`            | Obtener un componente por id                   |
+| POST   | `/componentes`                | Crear un componente (404 si el uso no existe)  |
+| PATCH  | `/componentes/:id`            | Actualizar un componente (404 si el uso no existe) |
+| DELETE | `/componentes/:id`            | Eliminar un componente                         |
+
+El filtro y la búsqueda se pueden **combinar**: `/componentes?usoId=1&nombre=ryzen`.
 
 ## Colección de Postman
 
-En [`postman/PC-Prearmadas.postman_collection.json`](postman/PC-Prearmadas.postman_collection.json),
+En [`postman/Componentes.postman_collection.json`](postman/Componentes.postman_collection.json),
 con todos los casos de uso (incluidos los de error 404 / 409). Importarla en Postman y usar la
 variable `baseUrl` (por defecto `http://localhost:3000`).
 

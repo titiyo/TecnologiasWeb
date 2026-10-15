@@ -8,7 +8,7 @@ import {
 import { Uso } from '../../usos/entities/uso.entity';
 
 @Entity()
-export class PcPrearmada {
+export class Componente {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -16,34 +16,23 @@ export class PcPrearmada {
   nombre!: string;
 
   @Column()
-  procesador!: string;
+  tipo!: string;
 
   @Column()
-  ram!: number;
-
-  @Column()
-  almacenamiento!: string;
-
-  @Column({ nullable: true })
-  placaVideo?: string;
+  marca!: string;
 
   @Column('decimal', {
     precision: 10,
     scale: 2,
     transformer: {
       to: (value: number) => value,
-      from: (value: string | null) => (value === null ? null : parseFloat(value)),
+      from: (value: string | null) =>
+        value === null ? null : parseFloat(value),
     },
   })
   precio!: number;
 
-  @Column()
-  fuente!: string;
-
-  @Column()
-  gabinete!: string;
-
-  @ManyToOne(() => Uso, (uso) => uso.pcPrearmadas)
+  @ManyToOne(() => Uso, (uso) => uso.componentes)
   @JoinColumn({ name: 'uso_id' })
   uso!: Uso;
 }

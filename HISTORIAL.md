@@ -1,6 +1,6 @@
 # Historial del Trabajo Práctico — Tecnologías Web (TUARI/UNICEN)
 
-> Bitácora de trabajo del TP "PC Prearmadas" (backend NestJS + frontend Angular).
+> Bitácora de trabajo del TP "Componentes" (backend NestJS + frontend Angular).
 > Registra, por cada paso: objetivo, concepto de cátedra aplicado, decisiones tomadas
 > y los checkpoints de comprensión respondidos por el/la estudiante.
 > Este documento se entrega junto con el TP como parte de la evaluación.
@@ -8,7 +8,7 @@
 ## Datos generales
 
 - **Materia:** Tecnologías Web (TUARI/UNICEN)
-- **Proyecto:** API "PC Prearmadas" — PCs agrupadas por tipo de uso
+- **Proyecto:** API "Componentes" — componentes de PC agrupados por tipo de uso
 - **Repositorio backend:** https://github.com/titiyo/TecnologiasWeb (branch `main`)
 - **Repositorio frontend:** (a crear, separado del backend)
 - **Stack 1ra entrega:** NestJS + TypeORM + PostgreSQL, colección Postman
@@ -31,28 +31,27 @@
 
 ## Modelo de datos (relación 1 a N)
 
-- **Uso (1) → PcPrearmada (N):** un uso (ej. "Gaming") agrupa muchas PCs.
+- **Uso (1) → Componente (N):** un uso (ej. "Gaming") agrupa muchos componentes.
 - **Uso:** `id`, `nombre`
-- **PcPrearmada:** `id`, `nombre`, `procesador`, `ram` (int, GB), `almacenamiento` (string),
-  `placa_video` (opcional), `precio` (decimal), `fuente`, `gabinete`, `uso_id` (FK → Uso.id)
+- **Componente:** `id`, `nombre`, `tipo`, `marca`, `precio` (decimal), `uso_id` (FK → Uso.id)
+
+> **Nota:** el modelo arrancó con una entidad `PcPrearmada` (pasos 4 y 8) y luego se **renombró a
+> `Componente`** (ver "Paso 12"). Las secciones anteriores al paso 12 conservan el nombre viejo como
+> registro histórico del proceso.
 
 ```mermaid
 erDiagram
-    USO ||--o{ PC_PREARMADA : "agrupa"
+    USO ||--o{ COMPONENTE : "agrupa"
     USO {
         int id PK
         string nombre
     }
-    PC_PREARMADA {
+    COMPONENTE {
         int id PK
         string nombre
-        string procesador
-        int ram
-        string almacenamiento
-        string placa_video
+        string tipo
+        string marca
         decimal precio
-        string fuente
-        string gabinete
         int uso_id FK
     }
 ```
@@ -60,7 +59,9 @@ erDiagram
 ## Decisiones tomadas (acordadas)
 
 - Base de datos: **PostgreSQL** (driver `pg`), `docker-compose` con **postgres + adminer**.
-- Conexión **hardcodeada** en `app.module.ts` (sin `.env` ni `@nestjs/config`). *(Ver pendiente.)*
+- Conexión por **variables de entorno** (`process.env`) con valores por defecto en `app.module.ts`
+  (sin `@nestjs/config`): `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`. Se agregó
+  `.env.example` (versionado) documentando las variables.
 - Validaciones **manuales** (sin `class-validator`): `ConflictException` para duplicados y
   nombre vacío; `NotFoundException` para "no encontrado".
 - Puerto **3000**.
@@ -68,16 +69,17 @@ erDiagram
 - **Dos repos separados** (backend y frontend), no monorepo.
 - Convenciones TypeORM: `@PrimaryGeneratedColumn`, `@Column`, `@Column('decimal')` para
   `precio`, propiedades con `!`; relación `@ManyToOne`/`@OneToMany` + `@JoinColumn({ name: 'uso_id' })`.
-- En TS/JSON se usa camelCase (`usoId`, `placaVideo`); la columna en la base es `uso_id`.
+- En TS/JSON se usa camelCase (`usoId`); la columna en la base es `uso_id`.
 
 ### Pendientes / a revisar antes de la entrega
 
-- [ ] **Conflicto:** la consigna pide "conexión por variables de entorno", pero se decidió
-      hardcodear. Revisar y resolver antes de entregar.
-- [ ] Filtrar el listado por uso: `GET /pc-prearmadas?usoId=X`.
-- [ ] Subir la colección de Postman al repo.
-- [ ] README.
-- [ ] Crear el repo separado del frontend Angular.
+- [x] **Conflicto resuelto:** la consigna pide "conexión por variables de entorno". Se cambió la
+      conexión a `process.env` con defaults (sin `@nestjs/config`) y se agregó `.env.example`.
+- [x] Filtrar el listado por uso: `GET /pc-prearmadas?usoId=X`.
+- [x] Subir la colección de Postman al repo (`postman/PC-Prearmadas.postman_collection.json`).
+- [x] README del proyecto.
+- [x] Conexión por variables de entorno (conflicto resuelto).
+- [ ] (2da entrega) Crear el repo separado del frontend Angular.
 
 ---
 
@@ -242,10 +244,11 @@ erDiagram
   - En `update` se usa "cargar (`findOne`) + modificar + `save`" en vez de `repository.update` con
     `result.affected`, porque con la relación el `save` es más seguro para reasignar la FK.
   - `remove` sí usa el chequeo de `result.affected` (404 si 0).
-  - **Nota pendiente:** `precio` es `decimal`; Postgres lo devuelve como **string** (ej. `"1500.00"`).
-    A revisar si conviene transformarlo a número para el frontend.
-  - **Nota pendiente:** borrar un `Uso` que tiene PCs asociadas genera un error de FK; hoy no está
-    manejado con un código lindo (a decidir más adelante).
+  - **Resuelto tras la prueba en vivo:** `precio` (`decimal`) se normalizó a **número** con un
+    `transformer` en `@Column('decimal', { precision: 10, scale: 2, transformer })`, para que la
+    API devuelva siempre un número (ej. `1500.5`) y no un string.
+  - **Resuelto tras la prueba en vivo:** borrar un `Uso` que tiene PCs asociadas ahora devuelve
+    **409 Conflict** con mensaje claro (se chequea la relación `pcPrearmadas` antes de borrar).
 
 **Checkpoint respondido por el/la estudiante:**
 
@@ -278,6 +281,110 @@ erDiagram
 > `pc-prearmadas`), pero no define un recurso individual nuevo ni debe ensuciar la estructura de la
 > ruta. Si no mandás el query param, simplemente recibís todas las PCs."
 
+### Verificación en vivo (pasos 6–9) — PostgreSQL real + API corriendo
+
+Se levantó la base con `docker compose up -d` y la API con `node dist/main`, y se probaron los
+endpoints. Resultados:
+
+| Caso | Resultado |
+|---|---|
+| `GET /usos` | Devuelve los 4 usos sembrados |
+| `POST /usos` | Crea el uso y devuelve 201 |
+| `POST /pc-prearmadas` (usoId válido) | Crea la PC y responde con `uso: { id }` |
+| `POST /pc-prearmadas` (usoId=999) | **404** `El uso con ID 999 no existe` |
+| `GET /pc-prearmadas` | Lista con el objeto `uso` embebido |
+| `GET /pc-prearmadas?usoId=1` | Solo las PCs de ese uso |
+| `GET /pc-prearmadas?usoId=3` | `[]` |
+| `GET /pc-prearmadas/:id` inexistente | **404** |
+| `DELETE /pc-prearmadas/:id` | `{ message, status: 'success' }` |
+
+**Hallazgos y correcciones (posteriores a la prueba):**
+- `precio` (`decimal`) se guardaba bien, pero al **leer** de Postgres volvía como **string**
+  (`"1500.50"`). **Corregido** con un `transformer` → ahora devuelve número.
+- Se quitó el atributo `version` de `docker-compose.yml` (Docker avisaba que está obsoleto).
+- Borrar un `Uso` con PCs asociadas **corregido**: ahora responde **409** con mensaje claro.
+
+### Paso 10 — Colección de Postman (hecho)
+
+- **Objetivo:** cumplir el requisito de la consigna de entregar una **colección de Postman con
+  todos los casos de uso**, subida al repo del backend.
+- **Ubicación:** `postman/PC-Prearmadas.postman_collection.json` (formato Postman Collection v2.1).
+- **Variable:** `baseUrl = http://localhost:3000`.
+- **Contenido (17 requests en 2 carpetas):**
+  - **Usos:** listar, obtener por id, crear, crear duplicado (409), actualizar, actualizar con
+    nombre vacío (409), eliminar, eliminar uso con PCs asociadas (409), uso inexistente (404).
+  - **PcPrearmadas:** listar (con `uso` embebido), filtrar por `?usoId=1`, obtener por id, crear
+    (con `placaVideo` opcional), crear con uso inexistente (404), actualizar, eliminar, PC
+    inexistente (404).
+- Cada request incluye una descripción con el código de estado esperado.
+
+### Ajuste — Conexión por variables de entorno (hecho)
+
+- **Motivo:** la consigna exige que la conexión a la base sea **por variables de entorno** y la
+  conexión estaba hardcodeada.
+- **Solución elegida:** leer `process.env.DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` y
+  `DB_NAME`, con **valores por defecto** (los mismos que se usaban hardcodeados) para no romper el
+  desarrollo local. No se usó `@nestjs/config` (se mantiene la decisión de no sumar esa lib).
+- **Extra:** `.env.example` versionado documentando las variables (el `.env` real sigue ignorado).
+- **Nota de deploy:** en Render esas variables se cargan desde el panel del servicio.
+
+### Paso 11 — README (hecho)
+
+- **Objetivo:** documentar el proyecto para la entrega.
+- **Contenido:** descripción, tecnologías, modelo de datos (con diagrama), requisitos, puesta en
+  marcha (install + docker + start), variables de entorno, tabla de endpoints (incluido el filtro),
+  ubicación de la colección de Postman y cómo correr los tests.
+
+### Paso 12 — Rename a `Componente` + búsqueda por nombre (hecho)
+
+- **Objetivo:** ajustar el dominio (la entidad del lado N pasa a llamarse **`Componente`**, ej.
+  "Ryzen 5" para Gaming, "i3" para Oficina) y **agregar "search"** (la clase pedía
+  "search & filtering").
+- **Conceptos aplicados:**
+  - **Búsqueda (search) vs filtro (filter):** el filtro por `usoId` restringe por la **relación**;
+    la búsqueda por `nombre` es una **coincidencia parcial de texto**. Ambos son *query params* y
+    se pueden **combinar** en el mismo `where`.
+  - **`ILike`** de TypeORM: genera un `ILIKE '%texto%'` en Postgres → coincidencia parcial y
+    **case-insensitive**.
+  - El `where` de TypeORM arma `{ uso: { id: usoId }, nombre: ILike('%...%') }` cuando vienen los dos.
+- **Cambios:**
+  - `src/componentes/` reemplaza a `src/pc-prearmadas/`: entidad `Componente` con `nombre`, `tipo`,
+    `marca`, `precio` (decimal con `transformer`), y la relación `@ManyToOne` → `Uso`.
+  - Endpoint base `/componentes` (antes `/pc-prearmadas`).
+  - `ComponentesService.findAll(usoId?, nombre?)` con `FindOptionsWhere` + `ILike`.
+  - `ComponentesController.findAll(@Query('usoId'), @Query('nombre'))`.
+  - `Uso`: `@OneToMany(() => Componente, (c) => c.uso) componentes`; `UsosService.remove` ahora
+    chequea `componentes`.
+  - Colección Postman renombrada a `postman/Componentes.postman_collection.json` (18 requests, con
+    la request de búsqueda); README actualizado.
+  - **Limpieza:** se sacaron del repo carpetas ajenas (`sillas-backend`, un clon en `postman/`) que
+    rompían el build; se agregaron al `.gitignore` los datos locales de Postman.
+
+**Checkpoint respondido por el/la estudiante** (tras una segunda vuelta): el **filtro** (`?usoId=`)
+restringe por la relación (los componentes de ese uso), mientras que la **búsqueda** (`?nombre=`) es
+texto parcial e insensible a mayúsculas. Los `%` de `ILike('%texto%')` significan "cualquier cosa
+antes y después" (coincidencia parcial), y si se mandan ambos query params el `where` los combina
+con **AND** (devuelve solo los que cumplen las dos condiciones).
+
+---
+
+## Checklist de la consigna (1ra entrega)
+
+| Requisito | Estado |
+|---|---|
+| Dos entidades con relación 1 a N | ✅ `Uso` → `Componente` |
+| CRUD completo (crear, editar, eliminar, listar) | ✅ en ambas entidades |
+| Filtrar el listado por al menos un campo | ✅ `GET /componentes?usoId=X` |
+| Buscar por nombre (search) | ✅ `GET /componentes?nombre=X` (parcial, case-insensitive) |
+| Persistencia en base relacional vía ORM | ✅ PostgreSQL + TypeORM |
+| Conexión por variables de entorno | ✅ `process.env` + defaults |
+| Colección de Postman con todos los casos de uso, en el repo | ✅ `postman/` |
+| Buenas prácticas (módulos/controllers/services, validaciones, errores y códigos HTTP) | ✅ 404 / 409 / 201 |
+| README | ✅ |
+| Repo de GitHub del backend | ✅ https://github.com/titiyo/TecnologiasWeb |
+
+**Entregables de la 1ra entrega:** repo del backend + colección Postman.
+
 ---
 
 ## Registro de commits
@@ -285,12 +392,18 @@ erDiagram
 | Commit | Descripción |
 |---|---|
 | `c8874f9` | chore: reset repositorio |
-| `346f1ee` | Initial commit: NestJS project scaffold |
-| `3bcca5b` | Implement Uso module with CRUD operations and add necessary DTOs |
-| (a completar) | Implement Uso findOne/update and validate nombre in PATCH |
-| (a completar) | Add PcPrearmada entity and DTOs |
-| (a completar) | Add docker-compose for Postgres and Adminer |
-| (a completar) | Integrate TypeORM/Postgres for Uso |
-| (a completar) | Persist Postgres data volume |
-| (a completar) | Implement PcPrearmada CRUD with Postgres relation |
-| (a completar) | Filter PcPrearmada listing by usoId |
+| `346f1ee` | Initial commit: NestJS project scaffold (paso 1) |
+| `3bcca5b` | Implement Uso module with CRUD operations and add necessary DTOs (paso 2) |
+| `0e55449` | Implement Uso findOne/update and validate nombre in PATCH (paso 3) |
+| `28f2d04` | Add docker-compose setup and update history (paso 5) |
+| `93b811c` | Integrate TypeORM/Postgres for Uso (paso 6) |
+| `2ae2edd` | Implement PcPrearmada CRUD with Postgres relation (paso 8) |
+| `d840cb8` | Filter PcPrearmada listing by usoId (paso 9) |
+| `70cf574` | Normalize decimal precio and handle Uso delete conflict (correcciones de la prueba) |
+| `9b85f35` | Read DB connection from environment variables (ajuste de la consigna) |
+| `1fab47c` | Add Postman collection with all use cases (paso 10) |
+| `8e00420` | Add project README (paso 11) |
+| (a completar) | Rename PcPrearmada to Componente and add nombre search (paso 12) |
+
+> **Nota:** los cambios de los pasos 4 (entidad/DTOs de `PcPrearmada`) y 7 (volumen `data/`)
+> quedaron agrupados dentro de otros commits, no tienen commit propio.

@@ -36,3 +36,7 @@ lerna-debug.log*
 
 # Database
 data/
+
+# Postman (workspace de archivos locales)
+.postman/
+postman/postman/

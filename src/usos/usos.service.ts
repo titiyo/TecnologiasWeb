@@ -54,14 +54,14 @@ export class UsosService implements OnModuleInit {
   async remove(id: number) {
     const uso = await this.usosRepository.findOne({
       where: { id },
-      relations: { pcPrearmadas: true },
+      relations: { componentes: true },
     });
     if (!uso) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
-    if (uso.pcPrearmadas.length > 0) {
+    if (uso.componentes.length > 0) {
       throw new ConflictException(
-        `No se puede eliminar el uso con ID ${id} porque tiene PCs prearmadas asociadas.`,
+        `No se puede eliminar el uso con ID ${id} porque tiene componentes asociados.`,
       );
     }
     await this.usosRepository.delete(id);
