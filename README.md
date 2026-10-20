@@ -84,6 +84,7 @@ producción (Render) se configuran desde el panel del servicio.
 | Método | Ruta        | Descripción                          |
 | ------ | ----------- | ------------------------------------ |
 | GET    | `/usos`     | Listar usos                          |
+| GET    | `/usos?nombre=gam` | Buscar usos por nombre (para elegir el uso al crear un componente) |
 | GET    | `/usos/:id` | Obtener un uso por id                |
 | POST   | `/usos`     | Crear un uso (409 si ya existe)      |
 | PATCH  | `/usos/:id` | Actualizar un uso (409 nombre vacío) |

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ConflictException,
+  Query,
 } from '@nestjs/common';
 import { UsosService } from './usos.service';
 import { CreateUsoDto } from './dto/create-uso.dto';
@@ -29,8 +30,8 @@ export class UsosController {
   }
 
   @Get()
-  findAll() {
-    return this.usosService.findAll();
+  findAll(@Query('nombre') nombre?: string) {
+    return this.usosService.findAll(nombre);
   }
 
   @Get(':id')

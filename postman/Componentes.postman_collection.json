@@ -29,6 +29,21 @@
           "response": []
         },
         {
+          "name": "Buscar usos por nombre (?nombre=gam)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos?nombre=gam",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"],
+              "query": [{ "key": "nombre", "value": "gam" }]
+            },
+            "description": "Busca usos por coincidencia parcial en el nombre (case-insensitive). Sirve para elegir el uso al crear un componente. 200 OK."
+          },
+          "response": []
+        },
+        {
           "name": "Obtener uso por ID",
           "request": {
             "method": "GET",

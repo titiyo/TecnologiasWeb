@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateUsoDto } from './dto/create-uso.dto';
 import { UpdateUsoDto } from './dto/update-uso.dto';
 import { Uso } from './entities/uso.entity';
@@ -33,8 +33,10 @@ export class UsosService implements OnModuleInit {
     return this.usosRepository.save(createUsoDto);
   }
 
-  findAll() {
-    return this.usosRepository.find();
+  findAll(nombre?: string) {
+    return this.usosRepository.find({
+      where: nombre ? { nombre: ILike(`%${nombre}%`) } : {},
+    });
   }
 
   async findOne(id: number) {

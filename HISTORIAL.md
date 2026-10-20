@@ -357,6 +357,8 @@ endpoints. Resultados:
     chequea `componentes`.
   - Colección Postman renombrada a `postman/Componentes.postman_collection.json` (18 requests, con
     la request de búsqueda); README actualizado.
+  - **Búsqueda de usos (`GET /usos?nombre=`)**: para "buscar la categoría" al crear un componente
+    (misma idea que el search de componentes, con `ILike`).
   - **Limpieza:** se sacaron del repo carpetas ajenas (`sillas-backend`, un clon en `postman/`) que
     rompían el build; se agregaron al `.gitignore` los datos locales de Postman.
 
