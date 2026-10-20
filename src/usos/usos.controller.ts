@@ -7,7 +7,9 @@ import {
   Param,
   Delete,
   ConflictException,
+  BadRequestException,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsosService } from './usos.service';
 import { CreateUsoDto } from './dto/create-uso.dto';
@@ -19,6 +21,14 @@ export class UsosController {
 
   @Post()
   async create(@Body() createUsoDto: CreateUsoDto) {
+    if (
+      typeof createUsoDto.nombre !== 'string' ||
+      createUsoDto.nombre.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'nombre es obligatorio y debe ser un texto no vacío',
+      );
+    }
     const usos = await this.usosService.findAll();
     const existingUso = usos.find((uso) => uso.nombre === createUsoDto.nombre);
     if (existingUso) {
@@ -35,12 +45,15 @@ export class UsosController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usosService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usosService.findOne(id);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUsoDto: UpdateUsoDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUsoDto: UpdateUsoDto,
+  ) {
     const nombre = updateUsoDto.nombre;
     if (nombre !== undefined) {
       if (nombre.trim() === '') {
@@ -48,17 +61,17 @@ export class UsosController {
       }
       const usos = await this.usosService.findAll();
       const existingUso = usos.find(
-        (uso) => uso.nombre === nombre && uso.id !== +id,
+        (uso) => uso.nombre === nombre && uso.id !== id,
       );
       if (existingUso) {
         throw new ConflictException(`El uso con nombre "${nombre}" ya existe.`);
       }
     }
-    return this.usosService.update(+id, updateUsoDto);
+    return this.usosService.update(id, updateUsoDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usosService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.usosService.remove(id);
   }
 }
