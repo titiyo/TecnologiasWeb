@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ComponentesService } from './componentes.service';
 import { CreateComponenteDto } from './dto/create-componente.dto';
@@ -22,25 +23,28 @@ export class ComponentesController {
   }
 
   @Get()
-  findAll(@Query('usoId') usoId?: string, @Query('nombre') nombre?: string) {
-    return this.componentesService.findAll(usoId ? +usoId : undefined, nombre);
+  findAll(
+    @Query('usoId', new ParseIntPipe({ optional: true })) usoId?: number,
+    @Query('nombre') nombre?: string,
+  ) {
+    return this.componentesService.findAll(usoId, nombre);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.componentesService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.componentesService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateComponenteDto: UpdateComponenteDto,
   ) {
-    return this.componentesService.update(+id, updateComponenteDto);
+    return this.componentesService.update(id, updateComponenteDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.componentesService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.componentesService.remove(id);
   }
 }
