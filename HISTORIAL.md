@@ -451,6 +451,15 @@ los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
   ambas entidades, relación embebida, filtro, búsqueda, filtro + búsqueda, y los códigos 400 / 404 /
   409). Los datos de prueba se crearon y se borraron, dejando la base como estaba.
 
+### Paso 17 — Material de entrega (hecho)
+
+- **Consigna de entrega:** link al repo (rama principal actualizada), colección de Postman y log de
+  la sesión con el agente de IA (opencode y/o cloud).
+- **Decisión del/la estudiante:** que todo quede en el mismo repo. Se agregó la carpeta `docs/` con
+  `resumen-opencode.md`, `resumen-claude.md` y `logs/` (el export completo de opencode y el de
+  Claude Code). Los apuntes de estudio para la oral quedaron **fuera** del repo.
+- El README enlaza toda la documentación.
+
 ---
 
 ## Checklist de la consigna (1ra entrega)

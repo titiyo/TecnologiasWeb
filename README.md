@@ -131,6 +131,18 @@ defecto `http://localhost:3000`).
 npm run test
 ```
 
+## Documentación y evidencia del proceso
+
+- [`HISTORIAL.md`](HISTORIAL.md): bitácora paso a paso, con decisiones, checkpoints de comprensión
+  y registro de commits.
+- [`docs/resumen-opencode.md`](docs/resumen-opencode.md): resumen de la sesión con opencode
+  (pasos 1 a 12).
+- [`docs/resumen-claude.md`](docs/resumen-claude.md): resumen de la sesión con Claude Code
+  (pasos 13 a 17).
+- [`docs/logs/`](docs/logs/): logs completos de ambas sesiones.
+  - `opencode-sesion.json`: export de opencode.
+  - `claude-code-sesion.zip`: export de Claude Code.
+
 ## Autor
 
 Benjamín Tiseira — Tecnologías Web, TUARI/UNICEN.
