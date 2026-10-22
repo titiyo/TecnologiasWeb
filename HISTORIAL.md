@@ -502,6 +502,10 @@ los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
 | `abae8bb` | Validar ids numericos con ParseIntPipe en componentes (paso 13) |
 | `27af29e` | Validate request body and numeric ids, return 400 instead of 500 (paso 13) |
 | `ff164fc` | Add tp-tecnologias-web skill v1.0.0 (AGENTS.md and .opencode) (paso 15) |
+| `79400ea` | PATCH /usos con nombre vacío devuelve 400 y requests 400 en Postman (pasos 13 y 14) |
+| `b7d6b61` | Actualizar README e HISTORIAL con validaciones; quitar DEFENSA.md (paso 16) |
+| `4078c83` | Agregar documentación de entrega: resúmenes y logs (paso 17) |
+| `6a97dc1` | Subir logs completos de las sesiones, con excepción en `.gitignore` (paso 17) |
 
 > **Nota:** los cambios de los pasos 4 (entidad/DTOs de `PcPrearmada`) y 7 (volumen `data/`)
 > quedaron agrupados dentro de otros commits, no tienen commit propio.
