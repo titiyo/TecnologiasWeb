@@ -36,6 +36,11 @@
 7. **Documentación.** Se actualizaron README e HISTORIAL (pasos 13 a 17, tabla de commits, autor) y
    se prepararon apuntes de estudio para la oral, que se dejaron fuera del repo.
 
+8. **Error encontrado después de la entrega (paso 18).** Probando en Postman, el estudiante vio que
+   un `POST` con un `id` existente en el body **pisaba** el registro. Se reprodujo, se decidió
+   rechazarlo con 400 y se agregaron 2 requests a Postman. Ese cambio y su log no están en el zip
+   exportado antes.
+
 ## Decisiones del estudiante en esta sesión
 
 | Decisión | Elegido |

@@ -460,6 +460,69 @@ los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
   Claude Code). Los apuntes de estudio para la oral quedaron **fuera** del repo.
 - El README enlaza toda la documentación.
 
+### Paso 18 — Error encontrado probando en Postman: un `id` en el body pisaba registros (hecho)
+
+- **Hallazgo (probando en Postman):** al hacer un `POST` con un `id` ya existente en el body, la API
+  **no daba error: sobrescribía** el registro. Pasaba porque el service copia el body completo al
+  registro y `save()`, cuando recibe un objeto con `id`, **actualiza** en vez de insertar. Se
+  reprodujo en `POST /componentes`, `POST /usos` y `PATCH /componentes/:id` (con el `id` de otro
+  registro en el body). Probablemente se disparó al pegar en el body la respuesta de un POST anterior,
+  que traía `"id"`.
+- **Decisión del/la estudiante (entre opciones):** **rechazar con 400** si el body trae un `id`
+  (en lugar de ignorarlo en silencio), para `POST` y `PATCH` de usos y de componentes.
+- **Implementación:** `ComponentesService.validar` suma el error `el id no se puede enviar en el
+  body` (se junta con los demás errores); en `UsosController` (`create` y `update`) se lanza
+  `BadRequestException` si viene `id`.
+- **Otra consulta, sin cambios:** `GET /componentes?nombre=Ga` no devolvía nada porque la búsqueda
+  es por el **nombre del componente**; "Gaming" es el nombre de un **uso** (se busca en
+  `GET /usos?nombre=`). Se decidió dejarlo así.
+- **Segundo hallazgo, misma causa:** `PATCH /componentes/:id` con `{"uso":{"id":999}}` daba **500**
+  (violación de la FK) y con un `uso` válido cambiaba el uso **sin pasar por la validación de
+  `usoId`**; los campos desconocidos se devolvían en la respuesta. Se consultó la skill antes de
+  tocar nada (reglas 1 y 8: la decisión es del/la estudiante y las mejoras extra se confirman; el
+  material de cátedra no cubre este caso).
+- **Decisión del/la estudiante (entre 4 opciones):** **rechazar con 400 cualquier campo no
+  permitido**, generalizando lo decidido para el `id`. Campos permitidos: `nombre`, `tipo`, `marca`,
+  `precio` y `usoId` en componentes; `nombre` en usos. Para cambiar el uso de un componente se usa
+  `usoId`.
+- **Implementación (generalizada):** en `ComponentesService.validar` una lista `CAMPOS_PERMITIDOS`
+  (los errores se juntan con los demás) y en `UsosController` un método privado `validarCampos`.
+- **Postman:** 3 requests nuevos ("Crear uso con id en el body (400)", "Crear componente con id en
+  el body (400)" y "Actualizar componente con campo no permitido (400)"); ahora son 13 en Usos y 15
+  en Componentes (28 en total).
+- **Verificación:** 13 de 13 pruebas del primer arreglo y luego 29 de 29 con la regla general (casos
+  nuevos y regresión de lo válido), con datos de prueba y la base igual que antes. Los 3 tests pasan.
+
+### Paso 19 — Búsqueda de errores con casos borde (hecho)
+
+- **Objetivo:** el/la estudiante pidió verificar si existían errores. Se probaron ~40 casos borde
+  contra la API (con datos de prueba, borrados al final) y se revisó el código. Resultado: el uso
+  normal andaba bien, pero se encontraron 6 errores:
+  1. `precio` mayor a 99.999.999,99 → **500** (la columna es `decimal(10,2)`).
+  2. Un `id` mayor a 2.147.483.647 (en el body, la ruta o `?usoId=`) → **500** (límite de un int de Postgres).
+  3. `POST`/`PATCH` sin body o sin `Content-Type` → **500** (el código leía un body que no llegó).
+  4. `GET /componentes?usoId=0` devolvía **todos** los componentes (`if (usoId)` tomaba el 0 como "sin filtro").
+  5. Usos duplicados: `"zz_dup"` o `" ZZ_Dup "` se aceptaban aunque ya existía `ZZ_Dup` (el chequeo
+     distinguía mayúsculas y espacios, pero la búsqueda no).
+  6. `precio` con más de 2 decimales: el POST respondía `10.999` pero la base guardaba `11`.
+- **Decisión del/la estudiante (entre opciones):** arreglar los tres grupos (los 500, la lógica del
+  filtro y el precio, y los duplicados). Se consultó antes la skill (regla 8: las mejoras extra se
+  confirman; regla 1: no asumir).
+- **Implementación:**
+  - `src/common/limites.ts` (`MAX_ID`, `MAX_PRECIO`).
+  - Un precio mayor al máximo → 400; un id fuera de rango → 404 (o `[]` en el filtro); un body
+    ausente, array o texto → 400 (`el body debe ser un objeto JSON`).
+  - `?usoId=0` o negativo → `[]`.
+  - El `precio` se redondea a 2 decimales antes de guardar.
+  - Los nombres de uso se comparan sin mayúsculas ni espacios y se guardan recortados.
+- **Postman:** 3 requests nuevos (uso duplicado con otra mayúscula 409, precio fuera de rango 400, id
+  fuera de rango 404): 14 en Usos y 17 en Componentes (31 en total).
+- **Verificación:** se repitieron los casos que fallaban (todos OK) y una regresión de lo válido. Los 3
+  tests pasan y el log del servidor no registró ningún 500.
+- **No se hizo (queda como limitación conocida):** una restricción `UNIQUE` en la base para el nombre
+  del uso, un largo máximo de nombre, y que `%` y `_` en `?nombre=` actúan como comodines. Para la
+  parte 2: habilitar CORS (`app.enableCors()`) para que el frontend Angular pueda llamar a la API.
+
 ---
 
 ## Checklist de la consigna (1ra entrega)
@@ -472,7 +535,7 @@ los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
 | Buscar por nombre (search) | ✅ `GET /componentes?nombre=X` (parcial, case-insensitive) |
 | Persistencia en base relacional vía ORM | ✅ PostgreSQL + TypeORM |
 | Conexión por variables de entorno | ✅ `process.env` + defaults |
-| Colección de Postman con todos los casos de uso, en el repo | ✅ `postman/` (25 requests, incluidos 400 / 404 / 409) |
+| Colección de Postman con todos los casos de uso, en el repo | ✅ `postman/` (31 requests, incluidos 400 / 404 / 409) |
 | Buenas prácticas (módulos/controllers/services, validaciones, errores y códigos HTTP) | ✅ 201 / 400 / 404 / 409 |
 | README | ✅ |
 | Repo de GitHub del backend | ✅ https://github.com/titiyo/TecnologiasWeb |

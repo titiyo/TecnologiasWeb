@@ -112,16 +112,19 @@ Las validaciones se hacen a mano (sin `class-validator`), con las excepciones de
 | ------ | ------ |
 | 200 | Consulta, edición o borrado correctos. Un filtro sin resultados (ej. `?usoId=999`) también devuelve 200 con `[]` |
 | 201 | Alta correcta de un uso o de un componente |
-| 400 | Body inválido (campos faltantes, vacíos —incluido el nombre vacío de un uso en POST y PATCH—, `precio` negativo, `usoId` no entero), o un `id` / `usoId` que no es un número (`ParseIntPipe`). En un componente se devuelven **todos** los errores juntos |
-| 404 | El uso o el componente no existe (también al crear/editar un componente con un `usoId` inexistente) |
-| 409 | Conflicto con algo que ya existe: uso con nombre duplicado (POST o PATCH), o borrar un uso que tiene componentes |
+| 400 | Body inválido (campos faltantes, vacíos —incluido el nombre vacío de un uso en POST y PATCH—, `precio` negativo o mayor a 99999999.99, `usoId` no entero, o un body ausente), un campo no permitido en el body de un POST o PATCH (solo se aceptan `nombre`, `tipo`, `marca`, `precio` y `usoId` en componentes, y `nombre` en usos; por ejemplo un `id`, que pisaría un registro existente, o un objeto `uso`), o un `id` / `usoId` que no es un número (`ParseIntPipe`). En un componente se devuelven **todos** los errores juntos |
+| 404 | El uso o el componente no existe (también al crear/editar un componente con un `usoId` inexistente, o con un id mayor al máximo de un entero de Postgres, 2147483647) |
+| 409 | Conflicto con algo que ya existe: uso con nombre duplicado (se compara sin distinguir mayúsculas ni espacios; el nombre se guarda recortado), o borrar un uso que tiene componentes |
+
+Notas: `GET /componentes?usoId=0` (o un `usoId` fuera de rango) devuelve `[]`, y el `precio` se
+redondea a 2 decimales antes de guardar, para que la respuesta coincida con lo que queda en la base.
 
 En `PATCH /componentes/:id` solo se validan los campos que vienen en el body (actualización parcial).
 
 ## Colección de Postman
 
 En [`postman/Componentes.postman_collection.json`](postman/Componentes.postman_collection.json),
-con todos los casos de uso: 12 requests en Usos y 13 en Componentes, incluidos los casos de error
+con todos los casos de uso: 14 requests en Usos y 17 en Componentes, incluidos los casos de error
 400 / 404 / 409. Importarla en Postman con **Import → Files** y usar la variable `baseUrl` (por
 defecto `http://localhost:3000`).
 
