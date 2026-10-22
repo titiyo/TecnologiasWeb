@@ -40,3 +40,7 @@ data/
 # Postman (workspace de archivos locales)
 .postman/
 postman/postman/
+
+# Logs de las sesiones de IA que se entregan (la regla "logs" de arriba los ignoraba)
+!docs/logs/
+!docs/logs/*
