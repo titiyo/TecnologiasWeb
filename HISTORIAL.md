@@ -506,8 +506,9 @@ los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
      distinguía mayúsculas y espacios, pero la búsqueda no).
   6. `precio` con más de 2 decimales: el POST respondía `10.999` pero la base guardaba `11`.
 - **Decisión del/la estudiante (entre opciones):** arreglar los tres grupos (los 500, la lógica del
-  filtro y el precio, y los duplicados). Se consultó antes la skill (regla 8: las mejoras extra se
-  confirman; regla 1: no asumir).
+  filtro y el precio, y los duplicados). Se aplicaron los criterios de la skill (regla 8: las mejoras
+  extra se confirman; regla 1: no asumir), que se había consultado en el paso 18; para esta búsqueda
+  amplia no se volvió a abrir la skill ni se hicieron checkpoints de comprensión sobre estos arreglos.
 - **Implementación:**
   - `src/common/limites.ts` (`MAX_ID`, `MAX_PRECIO`).
   - Un precio mayor al máximo → 400; un id fuera de rango → 404 (o `[]` en el filtro); un body
