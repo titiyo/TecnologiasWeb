@@ -56,8 +56,8 @@ export class UsosController {
   ) {
     const nombre = updateUsoDto.nombre;
     if (nombre !== undefined) {
-      if (nombre.trim() === '') {
-        throw new ConflictException('El nombre no puede estar vacío.');
+      if (typeof nombre !== 'string' || nombre.trim() === '') {
+        throw new BadRequestException('nombre debe ser un texto no vacío');
       }
       const usos = await this.usosService.findAll();
       const existingUso = usos.find(

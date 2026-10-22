@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Componentes - TP Tecnologias Web",
-    "description": "Colección de Postman para la primera entrega del TP (backend NestJS + PostgreSQL). Entidades: Uso (1) -> Componente (N). Incluye CRUD de Usos y de Componentes, filtrado por uso, búsqueda por nombre, y casos de error (404 y 409).",
+    "description": "Colección de Postman para la primera entrega del TP (backend NestJS + PostgreSQL). Entidades: Uso (1) -> Componente (N). Incluye CRUD de Usos y de Componentes, filtrado por uso, búsqueda por nombre, y casos de error (400, 404 y 409).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -37,7 +37,12 @@
               "raw": "{{baseUrl}}/usos?nombre=gam",
               "host": ["{{baseUrl}}"],
               "path": ["usos"],
-              "query": [{ "key": "nombre", "value": "gam" }]
+              "query": [
+                {
+                  "key": "nombre",
+                  "value": "gam"
+                }
+              ]
             },
             "description": "Busca usos por coincidencia parcial en el nombre (case-insensitive). Sirve para elegir el uso al crear un componente. 200 OK."
           },
@@ -61,11 +66,20 @@
           "name": "Crear uso",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Streaming\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/usos",
@@ -80,11 +94,20 @@
           "name": "Crear uso duplicado (409)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Gaming\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/usos",
@@ -96,14 +119,51 @@
           "response": []
         },
         {
+          "name": "Crear uso con nombre vacío (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "Intenta crear un uso sin nombre (vacío o faltante). 400 Bad Request."
+          },
+          "response": []
+        },
+        {
           "name": "Actualizar uso",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Streaming y edición\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/usos/5",
@@ -115,21 +175,30 @@
           "response": []
         },
         {
-          "name": "Actualizar uso con nombre vacío (409)",
+          "name": "Actualizar uso con nombre vacío (400)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"   \"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/usos/5",
               "host": ["{{baseUrl}}"],
               "path": ["usos", "5"]
             },
-            "description": "Intenta dejar el nombre vacío / solo espacios. 409 Conflict."
+            "description": "Intenta dejar el nombre vacío / solo espacios. Es un valor inválido, no un conflicto con otro uso. 400 Bad Request."
           },
           "response": []
         },
@@ -174,6 +243,20 @@
             "description": "Uso que no existe. 404 Not Found."
           },
           "response": []
+        },
+        {
+          "name": "Uso con ID no numérico (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usos/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos", "abc"]
+            },
+            "description": "El id de la ruta no es un número. ParseIntPipe corta el pedido. 400 Bad Request."
+          },
+          "response": []
         }
       ]
     },
@@ -203,7 +286,12 @@
               "raw": "{{baseUrl}}/componentes?usoId=1",
               "host": ["{{baseUrl}}"],
               "path": ["componentes"],
-              "query": [{ "key": "usoId", "value": "1" }]
+              "query": [
+                {
+                  "key": "usoId",
+                  "value": "1"
+                }
+              ]
             },
             "description": "Filtra el listado por uso usando un query param. 200 OK."
           },
@@ -218,7 +306,12 @@
               "raw": "{{baseUrl}}/componentes?nombre=ryzen",
               "host": ["{{baseUrl}}"],
               "path": ["componentes"],
-              "query": [{ "key": "nombre", "value": "ryzen" }]
+              "query": [
+                {
+                  "key": "nombre",
+                  "value": "ryzen"
+                }
+              ]
             },
             "description": "Búsqueda por coincidencia parcial en el nombre (case-insensitive). 200 OK. Combinable con ?usoId=."
           },
@@ -242,11 +335,20 @@
           "name": "Crear componente",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Ryzen 5 5600\",\n  \"tipo\": \"Procesador\",\n  \"marca\": \"AMD\",\n  \"precio\": 220.5,\n  \"usoId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/componentes",
@@ -261,11 +363,20 @@
           "name": "Crear componente con uso inexistente (404)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Componente Fantasma\",\n  \"tipo\": \"Memoria RAM\",\n  \"marca\": \"Genérica\",\n  \"precio\": 50,\n  \"usoId\": 999\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/componentes",
@@ -277,14 +388,51 @@
           "response": []
         },
         {
+          "name": "Crear componente con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/componentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes"]
+            },
+            "description": "Body vacío: faltan nombre, tipo, marca, precio y usoId. Devuelve la lista de todos los errores. 400 Bad Request."
+          },
+          "response": []
+        },
+        {
           "name": "Actualizar componente",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"precio\": 199.99,\n  \"marca\": \"AMD\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/componentes/1",
@@ -292,6 +440,34 @@
               "path": ["componentes", "1"]
             },
             "description": "Actualiza parcialmente un componente. 200 OK, o 404 si no existe el uso/componente."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar componente con precio negativo (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precio\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/componentes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes", "1"]
+            },
+            "description": "En el PATCH solo se validan los campos enviados; un precio negativo es inválido. 400 Bad Request."
           },
           "response": []
         },
@@ -320,6 +496,40 @@
               "path": ["componentes", "999"]
             },
             "description": "Componente que no existe. 404 Not Found."
+          },
+          "response": []
+        },
+        {
+          "name": "Componente con ID no numérico (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/componentes/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes", "abc"]
+            },
+            "description": "El id de la ruta no es un número. ParseIntPipe corta el pedido. 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar componentes con usoId no numérico (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/componentes?usoId=abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes"],
+              "query": [
+                {
+                  "key": "usoId",
+                  "value": "abc"
+                }
+              ]
+            },
+            "description": "El query param usoId debe ser un número. 400 Bad Request."
           },
           "response": []
         }
