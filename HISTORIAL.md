@@ -11,6 +11,9 @@
 - **Proyecto:** API "Componentes" — componentes de PC agrupados por tipo de uso
 - **Repositorio backend:** https://github.com/titiyo/TecnologiasWeb (branch `main`)
 - **Repositorio frontend:** (a crear, separado del backend)
+- **Asistente de IA:** opencode con la skill `tp-tecnologias-web` (modelo DeepSeek Flash vía
+  OpenRouter, `deepseek-flash-latest`, según el log exportado) para los pasos 1 a 12; Claude Code
+  (con la misma skill) para los pasos 13 a 16.
 - **Stack 1ra entrega:** NestJS + TypeORM + PostgreSQL, colección Postman
 - **Stack 2da entrega:** Angular + deploy (Render / Netlify)
 
@@ -63,7 +66,10 @@ erDiagram
   (sin `@nestjs/config`): `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`. Se agregó
   `.env.example` (versionado) documentando las variables.
 - Validaciones **manuales** (sin `class-validator`): `ConflictException` para duplicados y
-  nombre vacío; `NotFoundException` para "no encontrado".
+  nombre vacío; `NotFoundException` para "no encontrado"; `BadRequestException` (400) para body
+  inválido, y `ParseIntPipe` (de Nest, sin librerías extra) para ids numéricos (ver paso 13).
+- Un **filtro sin resultados** (ej. `GET /componentes?usoId=999`) devuelve **200 con `[]`**, no 404
+  (decisión del paso 13).
 - Puerto **3000**.
 - Progresión: primero CRUD **en memoria**, después migrar a **TypeORM/Postgres**.
 - **Dos repos separados** (backend y frontend), no monorepo.
@@ -356,7 +362,7 @@ endpoints. Resultados:
   - `Uso`: `@OneToMany(() => Componente, (c) => c.uso) componentes`; `UsosService.remove` ahora
     chequea `componentes`.
   - Colección Postman renombrada a `postman/Componentes.postman_collection.json` (18 requests, con
-    la request de búsqueda); README actualizado.
+    la request de búsqueda; luego 25 al sumar los casos 400, ver paso 14); README actualizado.
   - **Búsqueda de usos (`GET /usos?nombre=`)**: para "buscar la categoría" al crear un componente
     (misma idea que el search de componentes, con `ILike`).
   - **Limpieza:** se sacaron del repo carpetas ajenas (`sillas-backend`, un clon en `postman/`) que
@@ -367,6 +373,83 @@ restringe por la relación (los componentes de ese uso), mientras que la **búsq
 texto parcial e insensible a mayúsculas. Los `%` de `ILike('%texto%')` significan "cualquier cosa
 antes y después" (coincidencia parcial), y si se mandan ambos query params el `where` los combina
 con **AND** (devuelve solo los que cumplen las dos condiciones).
+
+### Paso 13 — Validación del body e ids: 400 en vez de 500 (hecho)
+
+> A partir de este paso el trabajo se continuó con Claude Code, siguiendo la skill
+> `tp-tecnologias-web` v1.0.0 (se actualizó la copia del repo, ver paso 15).
+
+- **Objetivo:** la consigna pide "validaciones, manejo de errores y códigos de estado correctos".
+  Una prueba en vivo mostró que `POST /componentes` con `{}` y `GET /usos/abc` devolvían **500**.
+- **Decisiones tomadas (elegidas por el/la estudiante entre opciones):**
+  - Validar **a mano**, como el resto del proyecto (sin `class-validator`).
+  - Cuando el body tiene varios errores, responder **todos juntos** en un solo 400.
+  - Poner la validación en un **método privado del service** (`validar(dto, parcial)`).
+  - `POST /usos` con nombre faltante/vacío → **400**. El `PATCH /usos/:id` con nombre vacío seguía
+    en 409 (decisión del paso 3), pero al repasarlo en el checkpoint de abajo se decidió pasarlo
+    también a **400** (ver "Ajuste" al final de este paso); el 409 queda solo para duplicados.
+  - `GET /componentes?usoId=999` → **200 con `[]`** (un filtro sin resultados no es un error).
+- **Implementación:**
+  - Controllers de `usos` y `componentes`: `@Param('id', ParseIntPipe)` y
+    `@Query('usoId', new ParseIntPipe({ optional: true }))` → id no numérico = 400.
+  - `ComponentesService.validar(dto, parcial)`: `nombre`/`tipo`/`marca` texto no vacío, `precio`
+    número ≥ 0, `usoId` entero; junta los errores y lanza `BadRequestException`. Con
+    `parcial = true` (PATCH) solo valida los campos enviados.
+  - `UsosController.create`: 400 si el `nombre` falta o está vacío.
+- **Commits:** `abae8bb` (ParseIntPipe en componentes) y `27af29e` (validación y 400).
+
+**Checkpoint respondido por el/la estudiante** (primera respuesta, incompleta: faltaba qué pasa
+cuando el pipe no puede convertir el valor):
+
+> "el ParseIntPipe  pasa los datos que entran a int para evitar errores"
+
+**Segunda vuelta (tras la corrección):**
+
+> "Un 400 es mejor que un 500 en GET /componentes/abc porque indica que el problema está en la
+> solicitud del cliente , mientras que un 500 indica un fallo interno del servidor"
+
+**Checkpoint sobre el parámetro `parcial` de `validar`:**
+
+> "El parámetro parcial sirve para indicar que querés actualizar solo una parte de un recurso, sin
+> tener que enviar todos sus campos osea no cambiar todo pq pinto cambiar el precio o el nombre que
+> mande solo el valor eso"
+
+**Checkpoint: ¿por qué nombre vacío da 400 en el POST pero 409 en el PATCH?** Respuesta del/la
+estudiante:
+
+> "el 409 da conflicto pq es algo que ya existe pero son modificaciones puntuales el 400 es una mala
+> recuest osea que el sv solicita todos los datos pero el user no los envio todos bien"
+
+Al repasarla se notó que explica bien el 409 (algo que ya existe) y el 400 (datos mal enviados), pero
+que un **nombre vacío no choca con nada existente**, así que por esa misma lógica el `PATCH` también
+debía ser 400. **Ajuste:** se cambió `PATCH /usos/:id` con nombre vacío (o que no sea texto) de 409 a
+**400**; el 409 quedó solo para nombres duplicados y para borrar un uso con componentes. Se actualizó
+el request de Postman ("Actualizar uso con nombre vacío (400)") y el README. También se actualizaron
+los apuntes de estudio para la defensa oral, que quedaron fuera del repo.
+
+### Paso 14 — Requests de Postman para los casos 400 (hecho)
+
+- **Objetivo:** que la colección cubra los casos de error nuevos.
+- **Se agregaron 6 requests** (ahora hay 12 en Usos y 13 en Componentes, 25 en total):
+  crear uso con nombre vacío (400), uso con ID no numérico (400), crear componente con datos
+  inválidos (400), actualizar componente con precio negativo (400), componente con ID no numérico
+  (400) y filtrar componentes con `usoId` no numérico (400).
+- **Prueba en Postman:** se detectó que, al probar "Crear componente", el body del request había
+  quedado reemplazado por la **respuesta** de un POST anterior (traía `"uso":{"id":7}` en vez de
+  `"usoId"`), por eso la API respondió 400 con `usoId es obligatorio y debe ser un número entero`.
+  Era el comportamiento correcto de la validación; se restauró el body original.
+
+### Paso 15 — Actualización de la skill (hecho)
+
+- La copia local de la skill estaba desactualizada respecto del repo de la cátedra. Se actualizó a
+  la **v1.0.0** (agrega la regla 10: commitear en cada paso, y el chequeo automático de versión) y
+  se copiaron `AGENTS.md` y `.opencode/` a la raíz del repo del backend. Commit: `ff164fc`.
+
+### Paso 16 — Verificación final de la 1ra entrega (hecho)
+
+- Build y 3 tests OK. Prueba de punta a punta contra Postgres real: **33 de 33 casos OK** (CRUD de
+  ambas entidades, relación embebida, filtro, búsqueda, filtro + búsqueda, y los códigos 400 / 404 /
+  409). Los datos de prueba se crearon y se borraron, dejando la base como estaba.
 
 ---
 
@@ -380,8 +463,8 @@ con **AND** (devuelve solo los que cumplen las dos condiciones).
 | Buscar por nombre (search) | ✅ `GET /componentes?nombre=X` (parcial, case-insensitive) |
 | Persistencia en base relacional vía ORM | ✅ PostgreSQL + TypeORM |
 | Conexión por variables de entorno | ✅ `process.env` + defaults |
-| Colección de Postman con todos los casos de uso, en el repo | ✅ `postman/` |
-| Buenas prácticas (módulos/controllers/services, validaciones, errores y códigos HTTP) | ✅ 404 / 409 / 201 |
+| Colección de Postman con todos los casos de uso, en el repo | ✅ `postman/` (25 requests, incluidos 400 / 404 / 409) |
+| Buenas prácticas (módulos/controllers/services, validaciones, errores y códigos HTTP) | ✅ 201 / 400 / 404 / 409 |
 | README | ✅ |
 | Repo de GitHub del backend | ✅ https://github.com/titiyo/TecnologiasWeb |
 
@@ -405,7 +488,11 @@ con **AND** (devuelve solo los que cumplen las dos condiciones).
 | `9b85f35` | Read DB connection from environment variables (ajuste de la consigna) |
 | `1fab47c` | Add Postman collection with all use cases (paso 10) |
 | `8e00420` | Add project README (paso 11) |
-| (a completar) | Rename PcPrearmada to Componente and add nombre search (paso 12) |
+| `27cf13d` | Rename PcPrearmada to Componente and add nombre search (paso 12) |
+| `78a579a` | Add usos search by nombre, Postman request and defense notes |
+| `abae8bb` | Validar ids numericos con ParseIntPipe en componentes (paso 13) |
+| `27af29e` | Validate request body and numeric ids, return 400 instead of 500 (paso 13) |
+| `ff164fc` | Add tp-tecnologias-web skill v1.0.0 (AGENTS.md and .opencode) (paso 15) |
 
 > **Nota:** los cambios de los pasos 4 (entidad/DTOs de `PcPrearmada`) y 7 (volumen `data/`)
 > quedaron agrupados dentro de otros commits, no tienen commit propio.
