@@ -9,6 +9,13 @@ import { CreateComponenteDto } from './dto/create-componente.dto';
 import { UpdateComponenteDto } from './dto/update-componente.dto';
 import { Componente } from './entities/componente.entity';
 import { UsosService } from '../usos/usos.service';
+import { MAX_ID, MAX_PRECIO } from '../common/limites';
+
+const CAMPOS_PERMITIDOS = ['nombre', 'tipo', 'marca', 'precio', 'usoId'];
+
+// La columna precio guarda 2 decimales: se redondea antes de guardar para que la respuesta
+// coincida con lo que queda en la base.
+const redondear = (precio: number) => Math.round(precio * 100) / 100;
 
 @Injectable()
 export class ComponentesService {
@@ -21,7 +28,22 @@ export class ComponentesService {
   // Valida el body a mano y junta todos los errores en un solo 400.
   // parcial = true (PATCH): solo se chequean los campos que vinieron.
   private validar(dto: Partial<CreateComponenteDto>, parcial: boolean) {
+    // Sin body (o sin Content-Type) Nest entrega undefined, y un array o un texto tampoco sirven.
+    if (!dto || typeof dto !== 'object' || Array.isArray(dto)) {
+      throw new BadRequestException('el body debe ser un objeto JSON');
+    }
+
     const errores: string[] = [];
+
+    // Solo se aceptan estos campos. Un id en el body haría que save() pise un registro existente,
+    // y un objeto uso se saltearía la validación de usoId.
+    for (const campo of Object.keys(dto)) {
+      if (campo === 'id') {
+        errores.push('el id no se puede enviar en el body');
+      } else if (!CAMPOS_PERMITIDOS.includes(campo)) {
+        errores.push(`campo no permitido: ${campo}`);
+      }
+    }
 
     for (const campo of ['nombre', 'tipo', 'marca'] as const) {
       const valor = dto[campo];
@@ -40,6 +62,8 @@ export class ComponentesService {
         errores.push(
           'precio es obligatorio y debe ser un número mayor o igual a 0',
         );
+      } else if (dto.precio > MAX_PRECIO) {
+        errores.push(`precio no puede superar ${MAX_PRECIO}`);
       }
     }
 
@@ -60,14 +84,17 @@ export class ComponentesService {
     await this.usosService.findOne(usoId);
     const nuevoComponente = this.componentesRepository.create({
       ...rest,
+      precio: redondear(rest.precio),
       uso: { id: usoId },
     });
     return this.componentesRepository.save(nuevoComponente);
   }
 
-  findAll(usoId?: number, nombre?: string) {
+  async findAll(usoId?: number, nombre?: string) {
     const where: FindOptionsWhere<Componente> = {};
-    if (usoId) {
+    if (usoId !== undefined) {
+      // Un id fuera de rango no puede existir: el filtro no encuentra nada (y no llega a la base).
+      if (usoId < 1 || usoId > MAX_ID) return [];
       where.uso = { id: usoId };
     }
     if (nombre) {
@@ -80,10 +107,13 @@ export class ComponentesService {
   }
 
   async findOne(id: number) {
-    const componente = await this.componentesRepository.findOne({
-      where: { id },
-      relations: { uso: true },
-    });
+    const componente =
+      id > MAX_ID
+        ? null
+        : await this.componentesRepository.findOne({
+            where: { id },
+            relations: { uso: true },
+          });
     if (!componente) {
       throw new NotFoundException(`El componente con ID ${id} no existe.`);
     }
@@ -98,6 +128,9 @@ export class ComponentesService {
     }
     const componente = await this.findOne(id);
     Object.assign(componente, rest);
+    if (rest.precio !== undefined) {
+      componente.precio = redondear(rest.precio);
+    }
     if (usoId !== undefined) {
       componente.uso = { id: usoId } as Componente['uso'];
     }
@@ -105,7 +138,10 @@ export class ComponentesService {
   }
 
   async remove(id: number) {
-    const result = await this.componentesRepository.delete(id);
+    const result =
+      id > MAX_ID
+        ? { affected: 0 }
+        : await this.componentesRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`El componente con ID ${id} no existe.`);
     }

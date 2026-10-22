@@ -119,6 +119,34 @@
           "response": []
         },
         {
+          "name": "Crear uso duplicado con otra mayúscula (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"gaming\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "Los nombres se comparan sin distinguir mayúsculas ni espacios. 409 Conflict."
+          },
+          "response": []
+        },
+        {
           "name": "Crear uso con nombre vacío (400)",
           "request": {
             "method": "POST",
@@ -143,6 +171,34 @@
               "path": ["usos"]
             },
             "description": "Intenta crear un uso sin nombre (vacío o faltante). 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear uso con id en el body (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nombre\": \"Pisado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usos",
+              "host": ["{{baseUrl}}"],
+              "path": ["usos"]
+            },
+            "description": "El id no se puede enviar en el body (si no, save() pisaría el uso existente). 400 Bad Request."
           },
           "response": []
         },
@@ -416,6 +472,62 @@
           "response": []
         },
         {
+          "name": "Crear componente con precio fuera de rango (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ryzen 5 5600\",\n  \"tipo\": \"Procesador\",\n  \"marca\": \"AMD\",\n  \"precio\": 10000000000,\n  \"usoId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/componentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes"]
+            },
+            "description": "El precio no puede superar 99999999.99 (columna decimal(10,2)). 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear componente con id en el body (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nombre\": \"Pisado\",\n  \"tipo\": \"Procesador\",\n  \"marca\": \"AMD\",\n  \"precio\": 100,\n  \"usoId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/componentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes"]
+            },
+            "description": "El id no se puede enviar en el body (si no, save() pisaría el componente existente). 400 Bad Request."
+          },
+          "response": []
+        },
+        {
           "name": "Actualizar componente",
           "request": {
             "method": "PATCH",
@@ -472,6 +584,34 @@
           "response": []
         },
         {
+          "name": "Actualizar componente con campo no permitido (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uso\": { \"id\": 999 }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/componentes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes", "1"]
+            },
+            "description": "Solo se aceptan nombre, tipo, marca, precio y usoId. Un objeto uso (o cualquier campo raro) se rechaza; para cambiar el uso hay que mandar usoId. 400 Bad Request."
+          },
+          "response": []
+        },
+        {
           "name": "Eliminar componente",
           "request": {
             "method": "DELETE",
@@ -510,6 +650,20 @@
               "path": ["componentes", "abc"]
             },
             "description": "El id de la ruta no es un número. ParseIntPipe corta el pedido. 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "Componente con ID fuera de rango (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/componentes/3000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["componentes", "3000000000"]
+            },
+            "description": "Un id mayor al máximo de un int de Postgres (2147483647) no puede existir. 404 Not Found."
           },
           "response": []
         },

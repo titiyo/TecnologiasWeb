@@ -9,6 +9,7 @@ import { ILike, Repository } from 'typeorm';
 import { CreateUsoDto } from './dto/create-uso.dto';
 import { UpdateUsoDto } from './dto/update-uso.dto';
 import { Uso } from './entities/uso.entity';
+import { MAX_ID } from '../common/limites';
 
 @Injectable()
 export class UsosService implements OnModuleInit {
@@ -40,7 +41,8 @@ export class UsosService implements OnModuleInit {
   }
 
   async findOne(id: number) {
-    const uso = await this.usosRepository.findOneBy({ id });
+    const uso =
+      id > MAX_ID ? null : await this.usosRepository.findOneBy({ id });
     if (!uso) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
@@ -54,10 +56,13 @@ export class UsosService implements OnModuleInit {
   }
 
   async remove(id: number) {
-    const uso = await this.usosRepository.findOne({
-      where: { id },
-      relations: { componentes: true },
-    });
+    const uso =
+      id > MAX_ID
+        ? null
+        : await this.usosRepository.findOne({
+            where: { id },
+            relations: { componentes: true },
+          });
     if (!uso) {
       throw new NotFoundException(`El uso con ID ${id} no existe.`);
     }
